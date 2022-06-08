@@ -1,0 +1,33 @@
+version: '3'
+services:
+  cache:
+    image: redis:6.2-alpine
+    restart: always
+    ports:
+      - 6379:6379
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
+      - cache:/data
+
+  backend:
+    build:
+      context: .
+      args:
+        user: ${RUN_AS_USER:-node}
+    volumes:
+      - ./:/app
+      - node_modules:/app/node_modules
+    ports:
+      - 3000:3000
+    depends_on:
+      - cache
+    environment:
+      PORT: 3000
+      REDIS_URL: redis://cache:6379
+      # openssl rand -hex 32
+      SECRET: 0594509a7ae3354305f7a03a908529e0d28d58d23ab80cd2d1b195c34d2b0d27
+
+volumes:
+  cache:
+    driver: local
+  node_modules:
